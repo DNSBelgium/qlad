@@ -1,0 +1,10 @@
+MAILTO=""
+SHELL=/bin/bash
+
+# m h  dom mon dow   command
+
+#set path to scripts
+PATH=/home/qlad/QLAD-global/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+#proces the pcap files and detect anomalies, every 5 minutes
+*/5 * * * * qlad . config.sh && run_analyse_bootstrap.sh >> $QLADGLOBAL_LOG_DIR/qlad-global_analyse.log 2>&1

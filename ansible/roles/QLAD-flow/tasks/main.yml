@@ -1,0 +1,85 @@
+#
+# QLAD - An anomaly detection system for DNS traffic
+# Copyright (C) 2017 DNS Belgium
+#
+# This file is part of QLAD.
+#
+# QLAD is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# QLAD is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with QLAD.  If not, see <http://www.gnu.org/licenses/>.
+#
+- name: Create QLAD-flow directory
+  file:
+    path: "{{ base_dir }}/QLAD-flow"
+    state: directory
+
+- name: Create data directory
+  file: 
+    path: "{{ data_dir }}"
+    state: directory
+    owner: qlad
+    group: qlad
+
+- name: Put QLAD-flow code in place
+  synchronize:
+    src: "{{ source_folder }}/QLAD-flow/"
+    dest: "{{ base_dir }}/QLAD-flow"
+  register: code_update
+
+- name: Set permissions
+  file: 
+    dest: "{{ base_dir }}/QLAD-flow" 
+    owner: qlad 
+    group: qlad 
+    recurse: yes
+
+- name: Install the 'Development tools' package group
+  yum: name="@Development tools" state=present
+
+- name: Install 'libpcap' libraries
+  yum: name=libpcap-devel state=present
+
+- name: Install lsof
+  yum: name=lsof state=present
+
+- name: Build/install QLAD-flow
+  block:
+    - command: "chdir={{ base_dir }}/QLAD-flow ./autogen.sh"
+    - command: "chdir={{ base_dir }}/QLAD-flow ./configure"
+    - command: "chdir={{ base_dir }}/QLAD-flow make"
+    - command: "chdir={{ base_dir }}/QLAD-flow make install"
+  when: code_update.changed
+
+- name: Install python requirements
+  pip:
+    requirements: "{{ base_dir }}/QLAD-flow/scripts/requirements.txt"
+
+- name: Configure
+  template:
+    src: config.sh.j2
+    dest: "{{ base_dir }}/QLAD-flow/scripts/config.sh"
+    owner: qlad
+    group: qlad
+    mode: "u+x"
+
+- name: Initialize Maxmind IP database. 
+  shell: "source {{ base_dir }}/QLAD-flow/scripts/config.sh && {{ base_dir }}/QLAD-flow/scripts/run_update_geo_ip_db.sh"
+  args:
+    creates: "{{ tmp_dir }}/maxmind"
+
+- name: Ensure crontab file is active.
+  copy:
+    remote_src: yes
+    src: "{{ base_dir }}/QLAD-flow/scripts/cron_jobs.txt"
+    dest: /etc/cron.d/QLAD_flow
+    owner: root
+    group: root

@@ -1,0 +1,39 @@
+#
+# QLAD - An anomaly detection system for DNS traffic
+# Copyright (C) 2017 DNS Belgium
+#
+# This file is part of QLAD.
+#
+# QLAD is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# QLAD is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with QLAD.  If not, see <http://www.gnu.org/licenses/>.
+#
+- name: Add MongoDB official repository for CentOS
+  copy:
+    src: mongodb-org-3.4.repo
+    dest: /etc/yum.repos.d/mongodb-org-3.4.repo
+
+- name: Install MongoDB with default version
+  yum: name=mongodb-org state=present
+  register: install_result
+
+- name: Set mongod INIT status and start
+  service: name=mongod state=started enabled=yes
+  when: install_result|changed
+
+- name: Configure mongodb
+  template: src=mongod.conf.j2 dest=/etc/mongod.conf
+  register: config_result
+
+- name: mongodb restart
+  service: name=mongod state=restarted
+  when: config_result|changed

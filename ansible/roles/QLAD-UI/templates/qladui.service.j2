@@ -1,0 +1,15 @@
+[Unit]
+Description=QLAD-UI
+After=network.target
+
+[Service]
+ExecStart={{ base_dir }}/QLAD-UI/app.js
+Restart=always
+User=qlad
+Group=qlad
+Environment=PATH=/usr/bin:/usr/local/bin
+Environment=NODE_ENV=production
+WorkingDirectory={{ base_dir }}/QLAD-UI
+
+[Install]
+WantedBy=multi-user.target

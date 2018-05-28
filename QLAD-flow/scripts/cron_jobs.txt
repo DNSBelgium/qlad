@@ -1,0 +1,19 @@
+MAILTO=""
+SHELL=/bin/bash
+
+# m h  dom mon dow   command
+
+#set path to scripts
+PATH=/home/qlad/QLAD-flow/scripts/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+#Copy pcap to incoming dir
+*/1 * * * * qlad . config.sh && run_00_copy-pcap-to-staging_bootstrap.sh >> $QLADFLOW_LOG_DIR/qlad-flow_copy-pcap.log 2>&1
+
+#move pcap files from the incoming dir to the processing dir, every minute.
+*/1 * * * * qlad . config.sh && run_01_move_to_processing_bootstrap.sh >> $QLADFLOW_LOG_DIR/qlad-flow_move-pcap.log 2>&1
+
+#proces the pcap files and detect anomalies, every 2 minutes
+*/2 * * * * qlad . config.sh && run_02_anomaly_analyse_bootstrap.sh >> $QLADFLOW_LOG_DIR/qlad-flow_analyse.log 2>&1
+
+#Update the Maxmind GEO-IP database every 1st Wednessday of the month
+0 4 * * * qlad . config.sh && run-if-today.sh 1 Wed && run_update_geo_ip_db.sh

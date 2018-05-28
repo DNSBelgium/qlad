@@ -1,0 +1,70 @@
+#
+# QLAD - An anomaly detection system for DNS traffic
+# Copyright (C) 2017 DNS Belgium
+#
+# This file is part of QLAD.
+#
+# QLAD is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# QLAD is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with QLAD.  If not, see <http://www.gnu.org/licenses/>.
+#
+---
+# This playbook will setup and launch QLAD-UI.
+
+# Remote build fails due to insufficient memory
+- name: Build client code locally
+  shell: "chdir={{ source_folder }}/QLAD-UI/client NODE_PATH=src/ npm run build"
+  delegate_to: 127.0.0.1
+  become: no
+
+- name: Install Node
+  yum: name=nodejs  state=present
+
+- name: Install Redis
+  yum: name=redis  state=present
+
+- name: Start Redis Service
+  service: name=redis state=started enabled=yes
+
+- name: Put API code in place
+  synchronize:
+    src: "{{ source_folder }}/QLAD-UI/"
+    dest: "{{ base_dir }}/QLAD-UI"
+    rsync_opts:
+      - "--exclude=client"
+  notify:
+    - restart UI
+
+- name: Put client code in place
+  synchronize:
+    src: "{{ source_folder }}/QLAD-UI/client/build"
+    dest: "{{ base_dir }}/QLAD-UI/client/"
+
+- name: Set permissions
+  file:
+    dest: "{{ base_dir }}/QLAD-UI"
+    owner: qlad
+    group: qlad
+    recurse: yes
+
+- name: Install dependencies
+  npm:
+    path: "{{ base_dir }}/QLAD-UI"
+    production: yes
+
+- name: Setup QLAD-UI service
+  template:
+    src: qladui.service.j2
+    dest: /etc/systemd/system/qladui.service
+
+- name: Start QLAD-UI service
+  systemd: name=qladui state=started daemon_reload=yes enabled=yes

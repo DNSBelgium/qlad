@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+############################################################
+##                                                        ##
+##                                                        ##
+##              QLAD-global configuration                 ##
+##                                                        ##
+##                                                        ##
+############################################################
+
+#home dir of qlad-flow
+export QLADGLOBAL_HOME="{{ base_dir }}/QLAD-global"
+#tmp dir used for keep state files
+export TMP_DIR="{{ tmp_dir }}"
+
+#Log location
+export QLADGLOBAL_LOG_DIR="{{ log_dir }}"
+
+#name servers, seperate multiple NS with a semicolon ;
+export NAMESERVERS="{{ nameservers|join(';') }}"
+
+#The detection threshold. A value between 2 and 3 gives good results.
+export THRESHOLD=2

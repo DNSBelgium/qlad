@@ -1,0 +1,58 @@
+/*
+ * QLAD - An anomaly detection system for DNS traffic
+ * Copyright (C) 2017 DNS Belgium
+ *
+ * This file is part of QLAD.
+ *
+ * QLAD is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * QLAD is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with QLAD.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+@import 'hpe/index';
+@import 'react-vis/dist/style';
+
+.grommetux-color-index-graph-true {
+  stroke: #cddc39;
+}
+
+.grommetux-color-index-graph-false {
+  stroke: #FF5722;
+}
+
+.tick {
+  font-size: 11px;
+  line-height: 24px;
+  font-family: "Metric",Arial,sans-serif;
+  color: #333;
+  padding: 0 6px;
+}
+
+.tick line {
+  stroke: rgba(0,0,0,0.15);
+  height: 6px;
+  width: 1px;
+}
+
+.domain {
+  display: none;
+}
+
+.grommetux-chart-axis__slot {
+  font-size: 11px;
+}
+
+text {
+  font-size: 11px;
+  color: #333;
+  font-family: "Metric",Arial,sans-serif;
+}

@@ -1,0 +1,56 @@
+#
+# QLAD - An anomaly detection system for DNS traffic
+# Copyright (C) 2017 DNS Belgium
+#
+# This file is part of QLAD.
+#
+# QLAD is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# QLAD is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with QLAD.  If not, see <http://www.gnu.org/licenses/>.
+#
+- name: Create QLAD-global directory
+  file:
+    path: "{{ base_dir }}/QLAD-global"
+    state: directory
+
+- name: Put QLAD-global code in place
+  synchronize:
+    src: "{{ source_folder }}/QLAD-global/"
+    dest: "{{ base_dir }}/QLAD-global"
+  register: code_update
+
+- name: Set permissions
+  file: 
+    dest: "{{ base_dir }}/QLAD-global" 
+    owner: qlad 
+    group: qlad 
+    recurse: yes
+
+- name: Install python requirements
+  pip:
+    requirements: "{{ base_dir }}/QLAD-global/requirements.txt"
+
+- name: Configure
+  template:
+    src: config.sh.j2
+    dest: "{{ base_dir }}/QLAD-global/config.sh"
+    owner: qlad
+    group: qlad
+    mode: "u+x"
+
+- name: Ensure crontab file is active.
+  copy:
+    remote_src: yes
+    src: "{{ base_dir }}/QLAD-global/cron_jobs.txt"
+    dest: /etc/cron.d/QLAD_global
+    owner: root
+    group: root

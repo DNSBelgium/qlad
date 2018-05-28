@@ -1,0 +1,78 @@
+#
+# QLAD - An anomaly detection system for DNS traffic
+# Copyright (C) 2017 DNS Belgium
+#
+# This file is part of QLAD.
+#
+# QLAD is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# QLAD is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with QLAD.  If not, see <http://www.gnu.org/licenses/>.
+#
+- name: Create ENTRADA directory.
+  file:
+    path: "{{entrada_base_dir}}"
+    state: directory
+    owner: hadoop
+    group: hadoop
+
+- name: Create tmp directory.
+  file:
+    path: "{{entrada_base_dir}}/tmp"
+    state: directory
+
+- name: Put entrada code in place.
+  unarchive:
+    src: "{{entrada_src_dir}}/entrada-latest.tar.gz"
+    dest: "{{entrada_base_dir}}"
+
+- name: Create data directories for each nameserver.
+  file:
+    path: "{{entrada_data_dir}}/{{item[0]}}/{{item[1]}}"
+    state: directory
+  with_nested:
+    - ["pcap"]
+    - "{{server_names}}"
+
+- name: Create the base directory for ENTRADA data on HDFS.
+  shell: hdfs dfs -mkdir /user/hive/entrada ; echo done
+
+- name: Give Impala permission to access ENTRADA data on HDFS.
+  shell: hdfs dfs -chown impala:hive /user/hive/entrada
+
+- name: Create the Impala database tables.
+  command: "{{entrada_base_dir}}/entrada-latest/scripts/install/create_impala_tables.sh"
+
+- name: Make sure permissions are set correctly for these tables.
+  shell: hdfs dfs -chown -R impala:hive /user/hive/entrada
+
+- name: Create a directory for the log files.
+  file:
+    path: /var/log/entrada
+    state: directory
+
+- name: Setup logrotate.
+  copy:
+    content: |
+             /var/log/entrada/*.log {
+               size 10k
+               daily
+               maxage 10
+               compress
+               missingok
+             }
+    dest: /etc/logrotate.d/entrada
+
+- name: Initialize Maxmind IP database.
+  shell: source {{ entrada_base_dir }}/entrada-latest/scripts/run/config.sh && {{ entrada_base_dir }}/entrada-latest/scripts/run/run_update_geo_ip_db.sh
+
+- name: Ensure crontab file is active.
+  shell: crontab {{ entrada_base_dir }}/entrada-latest/scripts/run/cron_jobs.txt

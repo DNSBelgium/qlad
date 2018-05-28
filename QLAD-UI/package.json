@@ -1,0 +1,34 @@
+{
+  "name": "dns-dashboard",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "concurrently \"npm run server\" \"cd client && NODE_PATH=src/ npm start\"",
+    "server": "DEBUG=* nodemon app.js --exec babel-node --ignore client/",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "babel-cli": "^6.24.1",
+    "babel-core": "^6.24.1",
+    "body-parser": "^1.17.1",
+    "cookie-parser": "~1.4.3",
+    "debug": "~2.6.3",
+    "ejs": "~2.5.6",
+    "express": "~4.15.2",
+    "jwt-simple": "^0.5.1",
+    "kue": "^0.11.5",
+    "mongoose": "^4.9.4",
+    "morgan": "^1.8.1",
+    "node-impala": "^2.0.4",
+    "passport": "^0.3.2",
+    "passport-jwt": "^2.2.1"
+  },
+  "devDependencies": {
+    "concurrently": "^3.4.0",
+    "eslint": "3.16.1",
+    "eslint-config-google": "^0.9.1",
+    "nodemon": "^1.11.0",
+    "supertest": "^3.0.0",
+    "tape": "^4.6.3"
+  }
+}

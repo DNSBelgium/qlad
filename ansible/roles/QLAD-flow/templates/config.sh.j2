@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+############################################################
+##                                                        ##
+##                                                        ##
+##              QLAD-flow configuration                   ##
+##                                                        ##
+##                                                        ##
+############################################################
+
+#home dir of qlad-flow
+export QLADFLOW_HOME="{{ base_dir }}/QLAD-flow"
+#tmp dir used for keep state files
+export TMP_DIR="{{ tmp_dir }}"
+
+#input directories, subdirs must have same name as name server
+export S3_BUCKET="s3://s3-eu-west-1.amazonaws.com"
+#root directory for data input/output
+export DATA_DIR="{{ data_dir }}"
+
+#Log location
+export QLADFLOW_LOG_DIR="{{ log_dir }}"
+
+#name servers, seperate multiple NS with a semicolon ;
+export NAMESERVERS="{{ nameservers|join(';') }}"
+
+#QLAD-flow parameters
+# The length of an analysis window (in seconds)
+export WINDOW=600
+# Use shorter invtervals than the length of the analysis window to work with 
+# overlapping windows
+export INTERVAL=600
+# The number of aggregation levels. Low aggregation count (2) will turn fo-
+# cus in the direction of short-time anomalies (containing slightly elevated
+# false positive rate in the short-term range). Higher count (4 up to 8) will
+# lean towards long-term anomalies.
+export AGGREG=8
+# Selects whether to analyse the "shape", "scale" or "both" of the Gamma distribu-
+# tion parameters. setting "both" leads in several cases to more precise
+# results.
+export GAMMAPAR="both"
+# Determines the boundary past which the sketches are marked as anomalous.
+# The threshold setting serves as tradeoff between sensitivity and false
+# positive rate. A threshold of 0.8 seems to be a good choice when analysing
+# scale or shape. When analysing both the value should be raised by factor
+# from 1.4 to 2 to get reciprocal behaviour.
+export THRESH=2
+# Number of hash functions used (algorithm iterations).
+export HASHCNT=25
+# The size of the hash tables. Low values generate improper results, values
+# between 16 to 32 seem to be a good choice.
+export SKETCHCNT=32

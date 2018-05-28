@@ -1,0 +1,84 @@
+#
+# QLAD - An anomaly detection system for DNS traffic
+# Copyright (C) 2017 DNS Belgium
+#
+# This file is part of QLAD.
+#
+# QLAD is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# QLAD is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with QLAD.  If not, see <http://www.gnu.org/licenses/>.
+#
+- name: Install dependencies
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items: "{{ gnu_parallel_dependencies }}"
+
+- name: Create (download) directory
+  file:
+    path: "{{ gnu_parallel_download_path }}"
+    state: directory
+
+- name: Download (latest)
+  get_url:
+    url: "{{ gnu_parallel_download_url }}"
+    dest: "{{ gnu_parallel_download_path }}/{{ gnu_parallel_download_url | basename }}"
+    force: true
+
+- name: Create (build) directory
+  file:
+    path: "{{ gnu_parallel_build_path }}"
+    state: directory
+
+- name: Version check
+  shell: tar -jtf {{ gnu_parallel_download_path }}/{{ gnu_parallel_download_url | basename }} | head -n 1
+  changed_when: false
+  register: _version_check
+
+- name: Extract
+  unarchive:
+    src: "{{ gnu_parallel_download_path }}/{{ gnu_parallel_download_url | basename }}"
+    dest: "{{ gnu_parallel_build_path }}"
+    creates: "{{ gnu_parallel_build_path }}/{{ _version_check.stdout }}"
+    copy: false
+  register: _unarchive
+
+- name: Configure
+  command: ./configure
+  args:
+    chdir: "{{ gnu_parallel_build_path }}/{{ _version_check.stdout }}"
+  when: _unarchive | changed
+
+- name: Make
+  command: make -j{{ ansible_processor_cores + 1 }}
+  args:
+    chdir: "{{ gnu_parallel_build_path }}/{{ _version_check.stdout }}"
+  when: _unarchive | changed
+
+- name: Make install
+  command: make install
+  args:
+    chdir: "{{ gnu_parallel_build_path }}/{{ _version_check.stdout }}"
+  when: _unarchive | changed
+  become: true
+
+- name: Create .parallel directory
+  file: 
+    path: "{{ ansible_env.HOME }}/.parallel"
+    state: directory
+  when: _unarchive | changed
+
+- name: Silence citation notice
+  copy:
+    content: ""
+    dest: "{{ ansible_env.HOME }}/.parallel/will-cite"
+  when: _unarchive | changed
